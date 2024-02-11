@@ -5,6 +5,7 @@
 FileSystemView::FileSystemView(QWidget* parent)
         : QTreeView(parent)
 {
+    setStyleSheet("background-color:white;color:black;");
     static int newPlaylistCnt = 0;
     mShortName = QString("NewPlaylist%1").arg(++newPlaylistCnt);
     InitModel();

@@ -20,8 +20,21 @@ FileSystemModel::FileSystemModel(QObject* parent)
 QVariant FileSystemModel::data(const QModelIndex &index, int role) const
 {
     if(role == Qt::CheckStateRole && index.column() == 0) {
-        // TODO process it
-		return Qt::Unchecked;
+        QString path = filePath( index );
+        auto startedIt = std::find_if( mCheckedNodes.begin(), mCheckedNodes.end(),
+                [ &path ]( const QString&  selectedPath ) {
+                    return path.startsWith( selectedPath );
+                } );
+        if(  startedIt != mCheckedNodes.end() )
+        {
+            return Qt::Checked;
+        }
+        auto partionStartedIt = std::find_if( mCheckedNodes.begin(), mCheckedNodes.end(),
+                [ &path ]( const QString&  selectedPath ) {
+                    return selectedPath.startsWith( path );
+                } );
+        
+        return mCheckedNodes.contains( path ) ? Qt::Checked : Qt::Unchecked;
 	}
     return QFileSystemModel::data(index, role);
 }
@@ -29,7 +42,7 @@ QVariant FileSystemModel::data(const QModelIndex &index, int role) const
 bool FileSystemModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
     if(role == Qt::CheckStateRole && index.column() == 0) {
-        //TODO process it
+        mCheckedNodes.append( filePath( index ) );
 		return true;
 	}
     return QFileSystemModel::setData(index, value, role);
