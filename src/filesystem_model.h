@@ -14,5 +14,14 @@ public:
     Qt::ItemFlags flags(const QModelIndex &index) const override;
 
 private:
+    ///@brief попытаться объекдинить узлы в path
+    ///@return попытаться объекдинить узлы в path
+    bool mergeNode( const QModelIndex& index );
+
+    ///@brief попытаться разбить узлы до path
+    ///@return попытаться объекдинить узлы в path
+    bool unmergeNode( const QModelIndex& index );
+
+private:
     QStringList mCheckedNodes;
 };
