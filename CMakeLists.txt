@@ -20,6 +20,8 @@ set(PROJECT_SOURCES
     src/orpheus.ui
     src/orpheus.h
     src/orpheus.cpp
+    src/playlistmodel.h
+    src/playlistmodel.cpp
 )
 
 qt_add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})
