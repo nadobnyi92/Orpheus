@@ -44,18 +44,18 @@
      <x>0</x>
      <y>0</y>
      <width>421</width>
-     <height>21</height>
+     <height>33</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu">
     <property name="title">
      <string>Файл</string>
     </property>
-    <addaction name="action"/>
-    <addaction name="action_2"/>
-    <addaction name="action_3"/>
-    <addaction name="action_4"/>
-    <addaction name="action_5"/>
+    <addaction name="actionNew"/>
+    <addaction name="actionOpen"/>
+    <addaction name="actionSave"/>
+    <addaction name="actionSaveAs"/>
+    <addaction name="actionReject"/>
    </widget>
    <widget class="QMenu" name="menu_2">
     <property name="title">
@@ -67,27 +67,27 @@
    <addaction name="menu_2"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="action">
+  <action name="actionNew">
    <property name="text">
     <string>Новый</string>
    </property>
   </action>
-  <action name="action_2">
+  <action name="actionOpen">
    <property name="text">
     <string>Открыть</string>
    </property>
   </action>
-  <action name="action_3">
+  <action name="actionSave">
    <property name="text">
     <string>Сохранить</string>
    </property>
   </action>
-  <action name="action_4">
+  <action name="actionSaveAs">
    <property name="text">
     <string>Сохранить как...</string>
    </property>
   </action>
-  <action name="action_5">
+  <action name="actionReject">
    <property name="text">
     <string>Отменить</string>
    </property>

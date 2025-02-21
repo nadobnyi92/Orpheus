@@ -2,11 +2,13 @@
 
 #include <QFilesystemModel>
 
+#include "playlist_factory.h"
+
 class PlaylistModel final : public QFileSystemModel {
     Q_OBJECT
 
 public:
-    explicit PlaylistModel(QObject* parent);
+    explicit PlaylistModel(const QString& title, QObject* parent);
     PlaylistModel(const PlaylistModel& model) = delete;
     PlaylistModel& operator=(const PlaylistModel&) = delete;
     PlaylistModel(PlaylistModel&&) = delete;
@@ -20,6 +22,11 @@ public:
     QVariant data(const QModelIndex& index, int role) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role) override;
 
+    bool event(QEvent* event) override;
+
+signals:
+    void stateChanged(const QString& title);
+
 private:
     void addNode(const QModelIndex& index);
     void deleteNode(const QModelIndex& index);
@@ -30,6 +37,17 @@ private:
     bool isContainPath(const QString& path) const;
     bool isPartialContainPath(const QString& path) const;
 
+    QStringList getSelectedFiles() const;
+
+    bool savePlaylist();
+    bool saveNewPlaylist();
+    bool loadPlaylist();
+    bool rejectPlaylist();
+
 private:
     QStringList mCheckedPaths;
+    PlaylistFactory mPlaylistFactory;
+    std::unique_ptr< IPlaylistStorage > mStorage;
+    QString mTitle;
+    bool mChanged;
 };

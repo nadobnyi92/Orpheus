@@ -17,11 +17,19 @@ qt_standard_project_setup()
 
 set(PROJECT_SOURCES
     src/main.cpp
+    src/events.h
     src/orpheus.ui
     src/orpheus.h
     src/orpheus.cpp
-    src/playlistmodel.h
-    src/playlistmodel.cpp
+    src/playlist_model.h
+    src/playlist_model.cpp
+    src/playlist_view.cpp
+    src/playlist_view.cpp
+    src/iplaylist.h
+    src/playlist_factory.h
+    src/playlist_factory.cpp
+    src/playlist_m3u8.h
+    src/playlist_m3u8.cpp
 )
 
 qt_add_executable(${PROJECT_NAME} ${PROJECT_SOURCES})

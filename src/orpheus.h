@@ -2,6 +2,7 @@
 
 #include <QtWidgets/QMainWindow>
 
+#include "events.h"
 #include "ui_orpheus.h"
 
 class Orpheus final : public QMainWindow {
@@ -15,9 +16,14 @@ public:
     Orpheus& operator=(const Orpheus&&) = delete;
     ~Orpheus() override = default;
 
+private:
     void createPlaylist(int idx) const;
-    void onPlaylistChanged(int idx) const;
+    void onCurrentPlaylistChanged(int idx) const;
+    void onPlaylistStateChanged(const QString& title);
     void onPlaylistClose(int idx) const;
+
+
+    void onPlaylistAction(playlist_event::Type event) const;
 
 private:
     Ui::OrpheusClass mUi;

@@ -1,4 +1,10 @@
-#include "PlaylistModel.h"
+#include <QDirIterator>
+
+#include "playlist_model.h"
+#include "events.h"
+
+#include <QFileDialog>
+#include <QMessageBox>
 
 namespace {
 const QStringList AUDIO_EXTENSIONS = {
@@ -8,8 +14,10 @@ const QStringList AUDIO_EXTENSIONS = {
 };
 }
 
-PlaylistModel::PlaylistModel(QObject* parent)
+PlaylistModel::PlaylistModel(const QString& title, QObject* parent)
     : QFileSystemModel(parent)
+    , mTitle(title)
+    , mStorage(nullptr)
 {
     setRootPath("");
     setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
@@ -51,6 +59,8 @@ bool PlaylistModel::setData(const QModelIndex& index, const QVariant& value, int
         }
         updateParent(index);
         updateChildren(index);
+        emit stateChanged(mTitle+"*");
+        mChanged = true;
         return true;
     }
     return QFileSystemModel::setData(index, value, role);
@@ -96,8 +106,7 @@ void PlaylistModel::deleteNode(const QModelIndex& index)
 
 void PlaylistModel::updateParent(const QModelIndex& index)
 {
-    QModelIndex parent = index.parent();
-    if (parent.isValid()) {
+    if (const QModelIndex parent = index.parent(); parent.isValid()) {
         emit dataChanged(parent, parent, { Qt::CheckStateRole });
         updateParent(parent);
     }
@@ -127,3 +136,76 @@ bool PlaylistModel::isPartialContainPath(const QString& path) const
                })
         != mCheckedPaths.end();
 }
+
+QStringList PlaylistModel::getSelectedFiles() const
+{
+    QStringList selectedFiles{};
+    for(const auto& path: mCheckedPaths)
+    {
+        QDirIterator it(path, AUDIO_EXTENSIONS, QDir::NoFilter, QDirIterator::Subdirectories);
+        while(it.hasNext())
+        {
+            selectedFiles.append(it.next());
+        }
+    }
+    return selectedFiles;
+}
+
+bool PlaylistModel::event(QEvent* event)
+{
+    switch (event->type())
+    {
+    case playlist_event::SaveEvent:
+        return mStorage ? savePlaylist() : saveNewPlaylist();
+    case playlist_event::SaveAsEvent:
+        return saveNewPlaylist();
+    case playlist_event::RejectEvent:
+        return rejectPlaylist();
+    default:
+        return QFileSystemModel::event(event);
+    }
+}
+
+bool PlaylistModel::savePlaylist()
+{
+    mChanged = false;
+    emit stateChanged(mTitle);
+    return true;
+}
+
+bool PlaylistModel::saveNewPlaylist()
+{
+    QString playlistName = QFileDialog::getSaveFileName(nullptr, "Save new playlist",
+        QDir::homePath(), mPlaylistFactory.playlistFilterString());
+    mStorage = mPlaylistFactory.createStorage(playlistName);
+    if(mStorage)
+    {
+        mStorage->save(getSelectedFiles());
+    }
+    mChanged = false;
+    emit stateChanged(mTitle);
+    return true;
+}
+
+bool PlaylistModel::loadPlaylist()
+{
+    return true;
+}
+
+bool PlaylistModel::rejectPlaylist()
+{
+    if(!mChanged)
+    {
+        return false;
+    }
+    auto res = QMessageBox::question(nullptr, "Reject changes", "are you shure???");
+    if(res != QMessageBox::Ok)
+    {
+        return false;
+    }
+    mCheckedPaths = mStorage ? mStorage->files() : QStringList{};
+    emit dataChanged(QModelIndex(), QModelIndex());
+    return true;
+}
+
+
