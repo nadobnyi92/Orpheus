@@ -14,13 +14,13 @@ std::error_code PlaylistM3U8Storage::save(const QStringList& files)
 {
     mFiles = files;
     /// TODO save to file
-    return std::error_code();
+    return {};
 }
 
 std::error_code PlaylistM3U8Storage::load()
 {
     /// TODO load from files
-    return std::error_code();
+    return {};
 }
 
 const QString& PlaylistM3U8Description::name() const

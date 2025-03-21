@@ -14,6 +14,18 @@ const QStringList AUDIO_EXTENSIONS = {
 };
 }
 
+static QString normalizePath( const QString& path )
+{
+    if( QFileInfo(path).isDir() && !path.endsWith('/'))
+    {
+        return path + '/';
+    }
+    else
+    {
+        return path;
+    }
+}
+
 PlaylistModel::PlaylistModel(const QString& title, QObject* parent)
     : QFileSystemModel(parent)
     , mTitle(title)
@@ -106,7 +118,7 @@ void PlaylistModel::deleteNode(const QModelIndex& index)
 
 void PlaylistModel::updateParent(const QModelIndex& index)
 {
-    if (const QModelIndex parent = index.parent(); parent.isValid()) {
+    if (const QModelIndex parent = index.parent(); parent.isValid() && parent.parent().isValid()) {
         emit dataChanged(parent, parent, { Qt::CheckStateRole });
         updateParent(parent);
     }
@@ -124,17 +136,15 @@ void PlaylistModel::updateChildren(const QModelIndex& index)
 bool PlaylistModel::isContainPath(const QString& path) const
 {
     return mCheckedPaths.contains(path) || std::find_if(mCheckedPaths.begin(), mCheckedPaths.end(), [&path](const QString& selectPath) {
-        return !QDir { selectPath }.relativeFilePath(path).startsWith("../");
+        return normalizePath(path).startsWith(normalizePath(selectPath) );
     }) != mCheckedPaths.end();
 }
 
 bool PlaylistModel::isPartialContainPath(const QString& path) const
 {
-    return std::find_if(mCheckedPaths.begin(), mCheckedPaths.end(),
-               [&path](const QString& selectPath) {
-                   return !QDir { path }.relativeFilePath(selectPath).startsWith("../");
-               })
-        != mCheckedPaths.end();
+    return std::find_if(mCheckedPaths.begin(), mCheckedPaths.end(), [&path](const QString& selectPath) {
+        return normalizePath(selectPath).startsWith(normalizePath(path ));
+    }) != mCheckedPaths.end();
 }
 
 QStringList PlaylistModel::getSelectedFiles() const
@@ -199,11 +209,13 @@ bool PlaylistModel::rejectPlaylist()
         return false;
     }
     auto res = QMessageBox::question(nullptr, "Reject changes", "are you shure???");
-    if(res != QMessageBox::Ok)
+    if(res != QMessageBox::Yes)
     {
         return false;
     }
     mCheckedPaths = mStorage ? mStorage->files() : QStringList{};
+    mChanged = false;
+    emit stateChanged(mTitle);
     emit dataChanged(QModelIndex(), QModelIndex());
     return true;
 }
