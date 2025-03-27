@@ -32,8 +32,8 @@ PlaylistModel::PlaylistModel(const QString& title, QObject* parent)
     , mStorage(nullptr)
 {
     setRootPath("");
-    setFilter(QDir::Dirs | QDir::NoDotAndDotDot);
     setNameFilters(AUDIO_EXTENSIONS);
+    setNameFilterDisables(false);
 }
 
 int PlaylistModel::columnCount(const QModelIndex& parent) const
@@ -64,56 +64,43 @@ QVariant PlaylistModel::data(const QModelIndex& index, int role) const
 bool PlaylistModel::setData(const QModelIndex& index, const QVariant& value, int role)
 {
     if (role == Qt::CheckStateRole) {
-        if (isContainPath(filePath(index))) {
-            deleteNode(index);
+        if (data(index, role).toInt() != Qt::Unchecked) {
+            mChanged = deleteNode(index);
         } else {
-            addNode(index);
+            mChanged = addNode(index);
         }
         updateParent(index);
         updateChildren(index);
-        emit stateChanged(mTitle+"*");
-        mChanged = true;
+        if(mChanged)
+        {
+            emit stateChanged(mTitle+"*");
+        }
         return true;
     }
     return QFileSystemModel::setData(index, value, role);
 }
 
-void PlaylistModel::addNode(const QModelIndex& index)
+bool PlaylistModel::addNode(const QModelIndex& index)
 {
     const QString path = filePath(index);
-    mCheckedPaths.append(path);
-    if (!index.parent().isValid()) {
-        return;
+    QDirIterator it(path, AUDIO_EXTENSIONS, QDir::NoFilter, QDirIterator::Subdirectories);
+    if(!it.hasNext())
+    {
+        QMessageBox::warning(nullptr, "empty folder", "Selected folder dont contain audio files");
+        return false;
     }
-    QStringList siblingNodes {};
-    for (int row = 0; row < rowCount(index.parent()); ++row) {
-        const QModelIndex childIndex = QFileSystemModel::index(row, 0, index.parent());
-        QString childPath = filePath(childIndex);
-        if (!mCheckedPaths.contains(childPath)) {
-            return;
-        }
-        siblingNodes.append(childPath);
+    while(it.hasNext())
+    {
+        mCheckedPaths.append(it.next());
     }
-    for (const auto& siblingPath : siblingNodes) {
-        mCheckedPaths.removeAll(siblingPath);
-    }
-
-    addNode(index.parent());
+    return true;
 }
 
-void PlaylistModel::deleteNode(const QModelIndex& index)
+bool PlaylistModel::deleteNode(const QModelIndex& index)
 {
-    if (const QString path = filePath(index); mCheckedPaths.contains(path)) {
-        mCheckedPaths.removeAll(path);
-    } else if (index.parent().isValid()) {
-        for (int row = 0; row < rowCount(index.parent()); ++row) {
-            const QModelIndex childIndex = QFileSystemModel::index(row, 0, index.parent());
-            if (const QString childFilePath = filePath(childIndex); childFilePath != path) {
-                mCheckedPaths.append(childFilePath);
-            }
-        }
-        deleteNode(index.parent());
-    }
+    const QString delPath = normalizePath( filePath(index) );
+    const qsizetype delElements =  mCheckedPaths.removeIf([&delPath](const QString& path) { return path.startsWith(delPath); });
+    return delElements > 0;
 }
 
 void PlaylistModel::updateParent(const QModelIndex& index)
@@ -149,16 +136,7 @@ bool PlaylistModel::isPartialContainPath(const QString& path) const
 
 QStringList PlaylistModel::getSelectedFiles() const
 {
-    QStringList selectedFiles{};
-    for(const auto& path: mCheckedPaths)
-    {
-        QDirIterator it(path, AUDIO_EXTENSIONS, QDir::NoFilter, QDirIterator::Subdirectories);
-        while(it.hasNext())
-        {
-            selectedFiles.append(it.next());
-        }
-    }
-    return selectedFiles;
+    return mCheckedPaths;
 }
 
 bool PlaylistModel::event(QEvent* event)

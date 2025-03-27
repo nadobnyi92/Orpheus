@@ -28,8 +28,8 @@ signals:
     void stateChanged(const QString& title);
 
 private:
-    void addNode(const QModelIndex& index);
-    void deleteNode(const QModelIndex& index);
+    bool addNode(const QModelIndex& index);
+    bool deleteNode(const QModelIndex& index);
 
     void updateParent(const QModelIndex& index);
     void updateChildren(const QModelIndex& index);
