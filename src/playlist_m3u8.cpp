@@ -1,5 +1,10 @@
 #include "playlist_m3u8.h"
 
+#include <QFile>
+#include <QFileInfo>
+#include <QDir>
+#include <QMessageBox>
+
 PlaylistM3U8Storage::PlaylistM3U8Storage(QString path)
     : mPath(std::move(path))
 {
@@ -13,7 +18,21 @@ const QStringList& PlaylistM3U8Storage::files() const
 std::error_code PlaylistM3U8Storage::save(const QStringList& files)
 {
     mFiles = files;
-    /// TODO save to file
+    QFile file{ mPath };
+    QDir playlistDir = QFileInfo{ mPath }.absoluteDir();
+    if(!file.open(QIODevice::WriteOnly | QIODevice::Text ))
+    {
+        QMessageBox::critical(nullptr, "failed save playlist", QString{ "Failed create file %1" }.arg(mPath));
+    }
+    QTextStream playlistStream{ &file };
+    playlistStream << "#EXTM3U\n\n";
+    for(const auto& filename: mFiles )
+    {
+        playlistStream << "#EXTM3U," << QFileInfo{ filename }.fileName() << "\n";
+        playlistStream << playlistDir.relativeFilePath( filename ) << "\n\n";
+    }
+
+    file.close();
     return {};
 }
 
